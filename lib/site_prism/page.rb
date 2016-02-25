@@ -78,8 +78,16 @@ module SitePrism
     def self.url_matcher
       @url_matcher || url
     end
+    
+    def self.set_default_expansion(expansion)
+      @default_exapansion = expansion
+    end
+    
+    def self.default_expansion
+      @default_expansion
+    end
 
-    def url(expansion = {})
+    def url(expansion = self.calss.default_expansion)
       return nil if self.class.url.nil?
       Addressable::Template.new(self.class.url).expand(expansion).to_s
     end
