@@ -115,6 +115,45 @@ describe SitePrism::Page do
     end
   end
 
+  context 'default expansion' do
+    it 'should respond to set_deafult_expansion' do
+      expect(SitePrism::Page).to respond_to :set_default_expansion
+    end
+
+    it 'default_expansion should be {} by default' do
+      expect(SitePrism::Page.default_expansion).to eql({})
+    end
+
+    it 'should allow setting default expansion' do
+      class PageToSetDefaultExpansionAgainst < SitePrism::Page
+        set_default_expansion action: 'some_action'
+      end
+      expect(PageToSetDefaultExpansionAgainst.default_expansion).to eql(action: 'some_action')
+    end
+
+    it 'should use default expansion in url if expansion is not specified' do
+      class PageToSetDefaultExpansionAgainst < SitePrism::Page
+        set_url 'http://localhost.com{/action}'
+        set_default_expansion action: 'some_action'
+      end
+      page = PageToSetDefaultExpansionAgainst.new
+      expect_any_instance_of(Addressable::Template).to receive(:expand).with(action: 'some_action')
+      page.url
+    end
+
+    it 'should use specified expansion if it is specified' do
+      class PageToSetDefaultExpansionAgainst < SitePrism::Page
+        set_default_expansion action: 'some_action'
+        set_url 'http://localhost.com{/action}'
+      end
+      page = PageToSetDefaultExpansionAgainst.new
+      expect(PageToSetDefaultExpansionAgainst).not_to receive(:default_expansion)
+      expect_any_instance_of(Addressable::Template).not_to receive(:expand).with(action: 'some_action')
+      expect_any_instance_of(Addressable::Template).to receive(:expand).with(action: 'other_action')
+      page.url(action: 'other_action')
+    end
+  end
+
   it 'should respond to set_url_matcher' do
     expect(SitePrism::Page).to respond_to :set_url_matcher
   end
