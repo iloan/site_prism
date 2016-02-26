@@ -68,6 +68,17 @@ describe SitePrism::Page do
       expect(page_with_url.url).to eq('/users')
     end
 
+    it 'should use default expansion if it is set' do
+      class MyPageWithUriTemplateAndExpansion < SitePrism::Page
+        set_url '/users{/username}{?query*}'
+        set_default_expansion username: 'bob'
+      end
+      page_with_url = MyPageWithUriTemplateAndExpansion.new
+      expect(MyPageWithUriTemplateAndExpansion).to receive(:default_expansion).twice.and_return(username: 'bob')
+      expect { page_with_url.load }.to_not raise_error
+      expect(page_with_url.url).to eq('/users/bob')
+    end
+
     it 'should allow to load html' do
       class Page < SitePrism::Page; end
       page = Page.new
