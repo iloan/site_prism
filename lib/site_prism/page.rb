@@ -20,7 +20,7 @@ module SitePrism
     #
     # @param expansion_or_html
     # @param block [&block] A block to run once the page is loaded.  The page will yield itself into the block.
-    def load(expansion_or_html = {}, &block)
+    def load(expansion_or_html = self.class.default_expansion, &block)
       self.loaded = false
 
       if expansion_or_html.is_a? String
