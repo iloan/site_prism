@@ -13,6 +13,10 @@ module SitePrism
       @parent = parent
       @root_element = root_element
       Capybara.within(@root_element) { yield(self) } if block_given?
+
+      SitePrism::Waiter.wait_until_true do
+        self.loaded?
+      end
     end
 
     def visible?
