@@ -228,14 +228,36 @@ module SitePrism
     end
 
     def extract_section_options(args, &block)
-      if args.first.is_a?(Class)
-        section_class = args.shift
-      elsif block_given?
-        section_class = Class.new(SitePrism::Section, &block)
-      else
-        raise ArgumentError, 'You should provide section class either as a block, or as the second argument.'
+      section_class = deduce_section_class(args, &block)
+      arguments = deduce_search_arguments(section_class, args)
+      [section_class, arguments]
+    end
+
+    def deduce_section_class(args, &block)
+      if args.first.is_a?(Class) && args.first.ancestors.include?(SitePrism::Section)
+        klass = base_class = args.shift
       end
-      [section_class, args]
+
+      if block_given?
+        klass = Class.new(base_class || SitePrism::Section, &block)
+      end
+
+      unless klass
+        raise ArgumentError, "You should provide descendant of SitePrism::Section \
+class or/and a block as the second argument."
+      end
+      klass
+    end
+
+    def deduce_search_arguments(section_class, args)
+      extract_search_arguments(args) ||
+        extract_search_arguments(section_class.default_search_arguments) ||
+        raise(ArgumentError, "You should provide search arguments \
+in section creation or set_default_search_arguments within section class")
+    end
+
+    def extract_search_arguments(args)
+      args if args && !args.empty?
     end
   end
 end

@@ -32,13 +32,64 @@ describe SitePrism::Page do
     context 'second argument is not a Class and no block given' do
       subject(:invalid_page) { Page.section(:incorrect_section, '.section') }
       let(:error_message) do
-        'You should provide section class either as a block, or as the second argument.'
+        'You should provide descendant of SitePrism::Section class or/and a block as the second argument.'
       end
 
       it 'raises an ArgumentError' do
         expect { invalid_page }
           .to raise_error(ArgumentError)
           .with_message(error_message)
+      end
+    end
+
+    context 'default search arguments' do
+      class PageWithSectionWithDefaultSearchArguments < SitePrism::Page
+        class SectionWithDefaultArguments < SitePrism::Section
+          set_default_search_arguments :css, '.section'
+        end
+
+        section  :section_using_defaults, SectionWithDefaultArguments
+        section  :section_with_locator,   SectionWithDefaultArguments, '.other-section'
+        sections :sections,               SectionWithDefaultArguments
+      end
+      let(:page) { PageWithSectionWithDefaultSearchArguments.new }
+
+      context 'if default search arguments are not set' do
+        let(:search_arguments) { ['.other-section'] }
+
+        it 'should use arguments provided' do
+          expect(page).to receive(:find_first).with(*search_arguments).and_return(:element)
+          page.section_with_locator
+        end
+      end
+
+      context 'if default search arguments are set' do
+        let(:search_arguments) { [:css, '.section'] }
+
+        it 'should use arguments provided' do
+          expect(page).to receive(:find_first).with(*search_arguments).and_return(:element)
+          page.section_using_defaults
+        end
+      end
+
+      context 'if default search arguments are not set and no search arguments provided' do
+        it 'should raise ArgumentError' do
+          expect do
+            class ErroredPage < SitePrism::Page
+              section :section, Section
+            end
+          end.to raise_error(ArgumentError)
+        end
+      end
+
+      context 'if using sections' do
+        let(:search_arguments) { [:css, '.section'] }
+
+        it 'should use arguments provided' do
+          expect(page).to receive(:find_all).with(*search_arguments).and_return([:element] * 3)
+          expect(SitePrism::Section).to receive(:new).at_least(3).times.with(page, :element)
+          page.sections
+        end
       end
     end
   end
@@ -49,11 +100,43 @@ describe SitePrism::Section do
   let(:locator) { instance_double('Capybara::Node::Element') }
   let(:section_with_block) { SitePrism::Section.new(Page.new, locator) { 1 + 1 } }
 
+  describe '#default_search_arguments' do
+    class BaseSection < SitePrism::Section
+      set_default_search_arguments :css, '.default'
+    end
+
+    class ChildSection < BaseSection
+      set_default_search_arguments :xpath, '//html'
+    end
+
+    class SecondChildSection < BaseSection; end
+
+    it 'should be nil by default' do
+      expect(Section.default_search_arguments).to be_nil
+    end
+
+    it { expect(Section).to respond_to(:set_default_search_arguments) }
+
+    it 'should return default search arguments' do
+      expect(BaseSection.default_search_arguments).to eql([:css, '.default'])
+    end
+
+    it 'should return only this section default if they are set' do
+      expect(ChildSection.default_search_arguments).to eql([:xpath, '//html'])
+    end
+
+    it 'should parent section default arguments if defaults are not set' do
+      expect(SecondChildSection.default_search_arguments).to eql([:css, '.default'])
+    end
+  end
+
   describe 'Object' do
     subject { SitePrism::Section }
 
     it { is_expected.to respond_to(:element) }
     it { is_expected.to respond_to(:elements) }
+    it { is_expected.to respond_to(:section) }
+    it { is_expected.to respond_to(:sections) }
   end
 
   describe '#new' do
