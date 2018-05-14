@@ -15,7 +15,8 @@ module SitePrism
     end
 
     def self.default_wait_time
-      warn 'default_wait_time is now deprecated. This will be removed in an upcoming release.'
+      warn "default_wait_time is now deprecated. \
+This will be removed in an upcoming release."
       Capybara.default_max_wait_time
     end
   end
