@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SCAN_PATH: "." # Set the relative path in the repo to scan
-      POLICY: "custom-policy-high-critical-severity-misconfigurations" # Set the desired Wiz-cli policy to use
+      POLICY: "100_High_Misconfiguration" # Set the desired Wiz-cli policy to use
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
